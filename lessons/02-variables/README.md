@@ -6,6 +6,17 @@
 
 JS 里未赋值往往是 `undefined`。Go 的变量总有一个可用的零值。
 
+## 怎么写
+
+`:= 0` 仍然是赋值。这课要的是只声明、不写初值：
+
+```go
+var n int    // 0
+var s string // ""
+var ok bool  // false
+return n, s, ok
+```
+
 ## 命令
 
 ```bash

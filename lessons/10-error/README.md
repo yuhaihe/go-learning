@@ -2,7 +2,23 @@
 
 正常失败返回 `error`，不要 `panic`。`panic` 只留给程序无法继续的情况，例如启动时配置缺失。
 
-用 `fmt.Errorf("...: %w", err)` 包一层，调用方用 `errors.Is` 判断是不是某一种错误。
+用 `fmt.Errorf("...: %w", err)` 包一层，调用方用 `errors.Is` 判断是不是某一种错误。`%w` 才能被 `errors.Is` 认出来；写成 `%v` 就包不住。
+
+## 怎么写
+
+```go
+import "strconv"
+
+n, err := strconv.Atoi(s) // "12" -> 12；"x" -> err
+if err != nil {
+    return 0, fmt.Errorf("parse %q: %w", s, err)
+}
+if n <= 0 {
+    return 0, fmt.Errorf("parse %q: %w", s, ErrNotPositive)
+}
+```
+
+`ErrNotPositive` 已经在 `exercise.go` 里声明好了。
 
 ## 命令
 

@@ -6,7 +6,7 @@ type Rect struct {
 }
 
 func (r Rect) Area() int {
-	panic("TODO")
+	return r.W * r.H
 }
 
 type Address struct {
@@ -19,5 +19,5 @@ type User struct {
 }
 
 func (u User) Label() string {
-	panic("TODO")
+	return u.Name + "@" + u.City
 }

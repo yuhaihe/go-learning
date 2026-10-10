@@ -4,6 +4,29 @@
 
 不要用异常当正常分支。Go 没有 try/catch。
 
+## 怎么写
+
+```go
+func divide(a, b int) (int, error) {
+    if b == 0 {
+        return 0, errors.New("divide by zero")
+    }
+    return a / b, nil
+}
+```
+
+调用时先看错误。不要的返回值用 `_`：
+
+```go
+q, err := divide(10, 2)
+if err != nil {
+    // 处理错误，不要用 q
+}
+_, err = divide(1, 0) // 商不需要时用 _
+```
+
+`:=` 是第一次声明。后面再赋值用 `=`，变量必须已经存在。
+
 ## 命令
 
 ```bash

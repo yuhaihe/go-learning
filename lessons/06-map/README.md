@@ -4,6 +4,17 @@
 
 map 是引用类型。作为参数传进函数，函数里的修改外面看得到。
 
+## 怎么写
+
+```go
+m := make(map[string]int)
+m["go"] = 1
+m["go"]++          // 没有这个键时，从 0 开始加，结果是 1
+n := m["go"]       // 读取
+```
+
+`Count`：先 `make` 一个 `map[string]int`，`for _, w := range words`，对每个单词 `out[w]++`，最后返回这个 map。
+
 ## 命令
 
 ```bash

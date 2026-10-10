@@ -15,3 +15,17 @@ go test ./lessons/13-testing
 `Store.Name` 按 id 查名字。`Greet` 查到后返回 `hi ` 加名字。查不到就把错误原样返回。
 
 测试里的 `fakeStore` 就是假实现，不要在练习函数里访问数据库。
+
+## 怎么写
+
+`Greet` 只做这一件事：
+
+```go
+name, err := s.Name(id)
+if err != nil {
+    return "", err
+}
+return "hi " + name, nil
+```
+
+表和假实现已经写在 `exercise_test.go`，这一课你只补 `Greet`。

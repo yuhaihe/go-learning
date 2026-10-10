@@ -2,7 +2,17 @@
 
 `ShouldBindJSON` 把请求体填进结构体。字段上的 `binding` 标签负责校验，例如 `required`、`min`、`max`。
 
-校验失败要返回 400，不要继续执行业务。
+校验失败要返回 400，不要继续执行业务。结构体和 `binding` 标签已经写在 `exercise.go` 里。
+
+## 怎么写
+
+```go
+var req CreateNote
+if err := c.ShouldBindJSON(&req); err != nil {
+    return CreateNote{}, err
+}
+return req, nil
+```
 
 ## 命令
 

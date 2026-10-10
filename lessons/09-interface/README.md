@@ -4,6 +4,23 @@
 
 接口值由「具体类型」和「具体值」组成。业务代码依赖接口，测试时换一个假的实现。
 
+## 怎么写
+
+```go
+func (Dog) Speak() string {
+    return "woof"
+}
+
+func Say(s Speaker) string {
+    if s == nil {
+        return ""
+    }
+    return s.Speak()
+}
+```
+
+`Dog` 不用写 `implements Speaker`。有 `Speak() string` 就算实现了。
+
 ## 命令
 
 ```bash

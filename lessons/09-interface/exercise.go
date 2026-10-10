@@ -7,9 +7,12 @@ type Speaker interface {
 type Dog struct{}
 
 func (Dog) Speak() string {
-	panic("TODO")
+	return "woof"
 }
 
 func Say(s Speaker) string {
-	panic("TODO")
+	if s == nil {
+		return ""
+	}
+	return s.Speak()
 }

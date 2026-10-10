@@ -12,6 +12,15 @@ go test ./lessons/17-redis
 
 没连上 Redis 时测试会跳过，不算失败。
 
+## 怎么写
+
+```go
+err := rdb.Set(ctx, key, value, ttl).Err()
+return rdb.Get(ctx, key).Result()
+```
+
+`Set` 的最后一个参数就是过期时间。
+
 ## 练习
 
 `Remember` 把值写入 key，带上过期时间，再读出来返回。

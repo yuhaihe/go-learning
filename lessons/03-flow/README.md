@@ -4,6 +4,33 @@ Go 只有 `for`，没有 `while`。`for {}` 是死循环。`if` 和 `switch` 的
 
 `switch` 默认不会落到下一个分支，不用写 `break`。
 
+## 怎么写
+
+计数循环：
+
+```go
+for i := 0; i <= n; i++ {
+    if i%2 == 0 {
+        // i 是偶数
+    }
+}
+```
+
+按条件分支（没有 switch 变量）：
+
+```go
+switch {
+case n < 0:
+    return "neg"
+case n == 0:
+    return "zero"
+default:
+    return "pos"
+}
+```
+
+`neg` / `zero` / `pos` 只是这题约定的三个字符串，不是关键字。
+
 ## 命令
 
 ```bash

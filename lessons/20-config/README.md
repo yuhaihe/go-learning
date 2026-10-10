@@ -4,6 +4,18 @@
 
 用标准库 `log/slog` 打结构化日志。请求日志至少包含方法、路径和状态码。
 
+## 怎么写
+
+```go
+addr := os.Getenv("HTTP_ADDR")
+if addr == "" {
+    addr = ":3000"
+}
+log.Info("request", "method", method, "path", path, "status", status)
+```
+
+`Info` 后面是成对的键和值，不是 `Printf`。
+
 ## 命令
 
 ```bash

@@ -4,6 +4,23 @@
 
 函数的第一个参数习惯是 `ctx context.Context`。不要把 ctx 存在结构体里。
 
+## 怎么写
+
+`select` 同时等两件事，谁先到就走谁：
+
+```go
+timer := time.NewTimer(d)
+defer timer.Stop()
+select {
+case <-ctx.Done():
+    return ctx.Err()
+case <-timer.C:
+    return nil
+}
+```
+
+`ctx.Done()` 在取消或超时时关闭。`timer.C` 在 `d` 结束后收到信号。
+
 ## 命令
 
 ```bash

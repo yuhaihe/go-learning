@@ -14,6 +14,25 @@ export MYSQL_DSN='user:pass@tcp(127.0.0.1:3306)/notes?charset=utf8mb4&parseTime=
 db, err := gorm.Open(mysql.Open(os.Getenv("MYSQL_DSN")), &gorm.Config{})
 ```
 
+## 怎么写
+
+`Transaction` 的回调返回 error，整段会回滚：
+
+```go
+return db.Transaction(func(tx *gorm.DB) error {
+    user := User{Name: name}
+    if err := tx.Create(&user).Error; err != nil {
+        return err
+    }
+    if title == "" {
+        return errors.New("empty title") // 此时用户也不会留下
+    }
+    return tx.Create(&Note{UserID: user.ID, Title: title}).Error
+})
+```
+
+测试自己开 sqlite，你不用连 MySQL。
+
 ## 命令
 
 ```bash
