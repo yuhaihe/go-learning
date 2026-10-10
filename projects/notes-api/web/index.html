@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>笔记 API</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem auto; max-width: 720px; line-height: 1.5; }
+    form, section { margin-bottom: 1.5rem; }
+    label { display: block; margin-top: 0.5rem; }
+    input, textarea { width: 100%; box-sizing: border-box; }
+    button { margin-top: 0.5rem; margin-right: 0.4rem; }
+    pre { background: #f4f4f4; padding: 0.8rem; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h1>笔记</h1>
+  <p>页面和接口同源。先注册再登录，token 会带到后面的请求里。</p>
+
+  <section>
+    <h2>账号</h2>
+    <label>用户名 <input id="username" /></label>
+    <label>密码 <input id="password" type="password" /></label>
+    <button id="register">注册</button>
+    <button id="login">登录</button>
+  </section>
+
+  <section>
+    <h2>新建</h2>
+    <label>标题 <input id="title" /></label>
+    <label>内容 <textarea id="content" rows="3"></textarea></label>
+    <button id="create">创建</button>
+  </section>
+
+  <section>
+    <h2>列表</h2>
+    <label>页码 <input id="page" value="1" /></label>
+    <button id="reload">刷新</button>
+    <div id="list"></div>
+  </section>
+
+  <pre id="out"></pre>
+  <script>
+    const base = location.protocol === "file:" ? "http://127.0.0.1:3000" : ""
+    const out = document.querySelector("#out")
+    let token = localStorage.getItem("token") || ""
+
+    function show(data) {
+      out.textContent = typeof data === "string" ? data : JSON.stringify(data, null, 2)
+    }
+
+    async function api(path, options = {}) {
+      const headers = { "Content-Type": "application/json", ...(options.headers || {}) }
+      if (token) headers.Authorization = "Bearer " + token
+      const res = await fetch(base + path, { ...options, headers })
+      const body = await res.json().catch(() => ({}))
+      if (!res.ok) throw body
+      return body
+    }
+
+    document.querySelector("#register").onclick = async () => {
+      try {
+        show(await api("/register", { method: "POST", body: accountBody() }))
+      } catch (err) { show(err) }
+    }
+    document.querySelector("#login").onclick = async () => {
+      try {
+        const body = await api("/login", { method: "POST", body: accountBody() })
+        token = body.data.token
+        localStorage.setItem("token", token)
+        show(body)
+        loadList()
+      } catch (err) { show(err) }
+    }
+    document.querySelector("#create").onclick = async () => {
+      try {
+        show(await api("/notes", {
+          method: "POST",
+          body: JSON.stringify({
+            title: document.querySelector("#title").value,
+            content: document.querySelector("#content").value
+          })
+        }))
+        loadList()
+      } catch (err) { show(err) }
+    }
+    document.querySelector("#reload").onclick = loadList
+
+    function accountBody() {
+      return JSON.stringify({
+        username: document.querySelector("#username").value,
+        password: document.querySelector("#password").value
+      })
+    }
+
+    async function loadList() {
+      const page = document.querySelector("#page").value || "1"
+      try {
+        const body = await api("/notes?page=" + page + "&size=10")
+        const box = document.querySelector("#list")
+        box.innerHTML = ""
+        for (const note of body.data.list) {
+          const row = document.createElement("p")
+          row.textContent = "#" + note.id + " " + note.title
+          const view = document.createElement("button")
+          view.textContent = "查看"
+          view.onclick = async () => {
+            try { show(await api("/notes/" + note.id)) } catch (err) { show(err) }
+          }
+          const del = document.createElement("button")
+          del.textContent = "删除"
+          del.onclick = async () => {
+            try { show(await api("/notes/" + note.id, { method: "DELETE" })); loadList() } catch (err) { show(err) }
+          }
+          row.append(view, del)
+          box.append(row)
+        }
+        show(body)
+      } catch (err) { show(err) }
+    }
+  </script>
+</body>
+</html>

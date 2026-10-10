@@ -1,0 +1,17 @@
+# 在仓库根目录执行 air。改实战 API 后自动重新编译并重启。
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  cmd = "go build -o ./tmp/main ./projects/notes-api/cmd/api"
+  bin = "./tmp/main"
+  include_ext = ["go", "html"]
+  exclude_dir = ["tmp", "vendor", "lessons", "docs"]
+  delay = 500
+  stop_on_error = true
+
+[log]
+  time = true
+
+[misc]
+  clean_on_exit = true

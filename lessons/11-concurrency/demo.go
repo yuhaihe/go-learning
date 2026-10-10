@@ -1,0 +1,16 @@
+//go:build ignore
+
+package main
+
+import "fmt"
+
+func main() {
+	ch := make(chan string, 1)
+	ch <- "ping"
+	select {
+	case msg := <-ch:
+		fmt.Println(msg)
+	default:
+		fmt.Println("empty")
+	}
+}
