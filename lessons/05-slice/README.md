@@ -54,9 +54,8 @@ s = append(s, 20, 30) // 可加多个
 ## 做 `Unique` 的思路（不贴完整代码）
 
 1. 准备一个**结果 slice**（可先 `make([]int, 0)` 或 `var out []int`）。
-2. 准备一个 **map**，记录「某个数是否已经出现过」  
-   - 例如 `seen := make(map[int]struct{})`，没见过就 `seen[n] = struct{}{}`  
-   - 或 `map[int]bool`，`true` 表示见过。
+2. 准备一个 **map**，记录「某个数是否已经出现过」。`map[int]bool` 就够：`true` 表示见过。  
+   `map[int]struct{}` 是同一种记法。`struct{}` 是空结构体，不占数据，只用来表示「这个键在」。`struct{}{}` 是它的一个空值。用 `bool` 更直观。
 3. `for _, n := range nums`：若没见过，append 到结果，并在 map 里标记见过。
 4. 返回结果 slice。输入 `nil` 时应返回空 slice（长度 0），不是 `nil` 也可以，测试要求空 slice。
 

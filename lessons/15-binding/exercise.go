@@ -9,5 +9,10 @@ type CreateNote struct {
 
 // ParseCreateNote 绑定 JSON。校验失败时返回错误。
 func ParseCreateNote(c *gin.Context) (CreateNote, error) {
-	panic("TODO")
+	var req CreateNote
+	if err := c.ShouldBindJSON(&req); err != nil {
+		return CreateNote{}, err
+	}
+
+	return req, nil
 }

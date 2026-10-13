@@ -1,8 +1,16 @@
 # 14. Gin 与调用下游 HTTP
 
-Gin 负责路由和 JSON。路径参数用 `c.Param`，状态码用 `http.StatusOK` 这类常量。
+Gin 是 HTTP 框架，负责「哪个 URL 交给哪个函数」以及把结果写成 JSON。公司里的接口经常不查自己的表，而是按配置里的地址和超时去调别的 HTTP 服务。调用时带上 `context`，超时或客户端断开就停。
 
-公司里的接口服务经常不查自己的表，而是按配置里的 host 和 timeout 去调别的 HTTP 服务。调用时带上 `context`，超时或客户端断开就停。
+## 这一课的词
+
+`gin.New()` 创建一个空路由。`r.GET("/users/:id", UserHandler)` 注册 GET。`:id` 是路径参数，`/users/7` 里的 `7` 用 `c.Param("id")` 取出。
+
+`c.JSON(http.StatusOK, gin.H{"id": id})` 返回 JSON。`http.StatusOK` 就是数字 200。`gin.H` 是 `map[string]any` 的别名，用来拼一个 JSON 对象。
+
+`httptest` 是标准库里的假 HTTP，练习用它发请求，不必真的占用端口。demo 才会在 `:3014` 起一个临时服务。
+
+`http.NewRequestWithContext` 做出一个带着 `ctx` 的请求。`http.DefaultClient.Do` 把请求发出去。`defer resp.Body.Close()` 在函数结束前关掉响应体。`io.ReadAll` 把正文读成字节。状态码不是 200 时要返回错误。
 
 ## 命令
 

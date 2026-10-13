@@ -7,5 +7,12 @@ import (
 
 // Wait 在 ctx 取消时返回 ctx.Err()，否则等待 d 后返回 nil。
 func Wait(ctx context.Context, d time.Duration) error {
-	panic("TODO")
+	timer := time.NewTimer(d)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return nil
+	}
 }
