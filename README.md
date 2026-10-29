@@ -18,9 +18,7 @@ go test ./lessons/01-hello
 
 和 AI 一起学时，先自己写。测试失败再把报错贴过去，不要第一句就要完整答案。
 
-实战放在全部课后。先按 [`projects/notes-api/实现步骤.md`](projects/notes-api/实现步骤.md) 自己写，做完的代码在 [`projects/notes-api`](projects/notes-api/README.md)，卡住再对照。
-
-从空白目录再开一个项目时，照着 [`docs/从零建项目.md`](docs/从零建项目.md)。
+实战放在全部课后。先按 [`projects/notes-mine/README.md`](projects/notes-mine/README.md) 自己写。做完的对照在 [`projects/notes-api`](projects/notes-api/README.md)，卡住再看。
 
 ## 课表
 

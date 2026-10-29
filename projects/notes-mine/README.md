@@ -1,10 +1,8 @@
 # 自己实现笔记 API
 
-仓库里的 `projects/notes-api` 是做完的对照。不要先翻函数体。按下面的顺序新建一份，写完一步再看对应文件。
+`projects/notes-api` 是做完的对照。不要先翻那里的函数体。按下面的顺序在本目录写，写完一步再打开 `notes-api` 里的同名文件看。
 
-建议目录：`projects/notes-mine`。模块路径仍用 `go-learning/...`，这样不用新开 `go.mod`。下面的路径都写成 `notes-mine`，对照时再打开 `notes-api` 里的同名文件。
-
-先做完第 14 到第 20 课。这一份文档用的就是那些零件。
+模块路径仍用 `go-learning/...`，不用新开 `go.mod`。先做完第 14 到第 20 课，这一份用的就是那些零件。
 
 ## 最后要长成什么样
 
@@ -12,7 +10,26 @@
 
 数据在 MySQL。按 id 查看时先问 Redis。创建成功后往队列丢一个任务，另一个进程把它打到日志里。
 
-请求先进 handler，业务判断在 service，MySQL 和 Redis 只出现在 repo。
+```text
+projects/notes-mine/
+  cmd/api/          进程入口，只做组装
+  cmd/worker/       消费队列
+  internal/handler/ 解析 HTTP，返回 JSON
+  internal/middleware/ 登录校验
+  internal/httpserver/ 路由
+  internal/service/ 业务规则
+  internal/repo/    MySQL、Redis
+  internal/config/
+  internal/model/
+  internal/response/
+  internal/queue/
+  migrations/
+  web/
+```
+
+请求先进 handler，业务判断在 service，MySQL 和 Redis 只出现在 repo。要登录的路由放进 JWT 分组。发日志这类慢操作丢进队列，由 `cmd/worker` 消费，不要写在 handler 里。`main` 里不要写业务判断。
+
+仓库根目录的 `.gitignore` 已经忽略 `.env` 和 `tmp/`。`.env.example` 只留变量名和假密码，真实值放本机 `.env`。
 
 ## 第 0 步：环境和表
 
@@ -22,12 +39,12 @@ MySQL 里执行 `CREATE DATABASE notes;`。把仓库根目录的 `.env.example` 
 - `REDIS_ADDR`：一般是 `127.0.0.1:6379`
 - `JWT_SECRET`：随便一长串，不要提交 `.env`
 
-建 `projects/notes-mine/migrations/001_init.sql`，两张表：
+建 `migrations/001_init.sql`，两张表：
 
 - `users`：`id`、`username`（唯一）、`password_hash`、`created_at`
 - `notes`：`id`、`user_id`（普通索引）、`title`、`content`、`created_at`
 
-以后改表只追加 `002_xxx.sql`，不改这个文件。
+以后改表只追加 `002_xxx.sql`，不改已经写好的文件。
 
 ## 第 1 步：配置
 
@@ -36,6 +53,12 @@ MySQL 里执行 `CREATE DATABASE notes;`。把仓库根目录的 `.env.example` 
 写一个 `Config` 结构体，字段是 `HTTPAddr`、`MySQLDSN`、`RedisAddr`、`JWTSecret`。`Load()` 从环境变量读。`HTTP_ADDR` 空着时用 `:3000`，`REDIS_ADDR` 空着时用 `127.0.0.1:6379`。数据库地址和 JWT 密钥没有默认值，空了就让 `main` 退出。
 
 这一步还没有网络。在测试里 `t.Setenv` 之后调用 `Load()`，看字段对不对。
+
+在仓库根目录执行：
+
+```bash
+go test ./projects/notes-mine/internal/config
+```
 
 ## 第 2 步：模型
 
@@ -82,6 +105,12 @@ handler 只许调用这三个函数，不要在各处自己拼 `c.JSON`。
 - `Delete(ctx, userID, id)`：条件里必须同时有 `id` 和 `user_id`。影响行数是 0 就返回 `ErrNotFound`
 
 先不要写 Redis。用 sqlite 内存库写一个小测试：创建一条，列表总数是 1，删掉后再查是 `ErrNotFound`。sqlite 的打开方式和第 16 课一样。
+
+在仓库根目录执行：
+
+```bash
+go test ./projects/notes-mine/internal/repo
+```
 
 ## 第 6 步：缓存
 
@@ -137,6 +166,12 @@ type Enqueuer interface {
 
 用第 5 步的 sqlite 仓库，加上内存版缓存和假队列，测这条链路：创建会投递 1 次；自己能读到并且缓存里有；别的用户读同一条得到 `ErrNotFound`；删除后缓存没了。
 
+在仓库根目录执行：
+
+```bash
+go test ./projects/notes-mine/internal/service
+```
+
 ## 第 10 步：登录中间件
 
 文件：`internal/middleware/jwt.go`
@@ -151,11 +186,12 @@ type Enqueuer interface {
 
 handler 只做三件事：绑定 JSON 或路径参数、调用 service、选择返回。
 
+先做 `GET /health`：对数据库 `Ping`，失败返回 503。这一步通了，再加登录和业务接口。
+
 - `POST /register`、`POST /login`：绑定 `username`、`password`
 - `POST /notes`：绑定 `title`、`content`，用户 id 从中间件拿
 - `GET /notes/:id`、`DELETE /notes/:id`：id 不是正整数就 400
 - `GET /notes`：查询参数 `page`、`size`
-- `GET /health`：对数据库 `Ping`。失败返回 503
 
 `ErrInvalidInput` 对应 400，`ErrUnauthorized` 对应 401，`ErrConflict` 对应 409，`ErrNotFound` 对应 404。其它错误 500，日志可以打，响应里不要带数据库原文。
 
@@ -163,7 +199,7 @@ handler 只做三件事：绑定 JSON 或路径参数、调用 service、选择�
 
 文件：`internal/httpserver/server.go`
 
-`New` 接收 logger、数据库、JWT 密钥、两个 handler。
+`New` 接收 logger、数据库、JWT 密钥、两个 handler。路由集中在这里注册。
 
 注册顺序：
 
@@ -200,6 +236,15 @@ go run ./projects/notes-mine/cmd/api
 ```
 
 `curl http://127.0.0.1:3000/health` 应返回 `"status":"up"`。再用 curl 走一遍注册、登录、带 token 创建笔记。
+
+改代码想自动重启时，把仓库根目录 `.air.toml` 里的编译目标改成你的入口，再在仓库根目录执行 `air`：
+
+```toml
+cmd = "go build -o ./tmp/main ./projects/notes-mine/cmd/api"
+bin = "./tmp/main"
+```
+
+现在这份 `.air.toml` 编的是 `notes-api`。worker 不走 `air`，另开一个终端跑。
 
 ## 第 14 步：worker
 

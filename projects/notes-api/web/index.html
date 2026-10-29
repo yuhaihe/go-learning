@@ -2,121 +2,766 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>笔记 API</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="format-detection" content="telephone=no" />
+  <title>笔记</title>
   <style>
-    body { font-family: sans-serif; margin: 2rem auto; max-width: 720px; line-height: 1.5; }
-    form, section { margin-bottom: 1.5rem; }
-    label { display: block; margin-top: 0.5rem; }
-    input, textarea { width: 100%; box-sizing: border-box; }
-    button { margin-top: 0.5rem; margin-right: 0.4rem; }
-    pre { background: #f4f4f4; padding: 0.8rem; overflow: auto; }
+    :root {
+      --paper: #f3f5f3;
+      --ink: #1a2420;
+      --muted: #3f4c47;
+      --line: #d0d7d2;
+      --wash: #e4ebe6;
+      --margin: #c4453c;
+      --danger: #8e2a24;
+      --sans: "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      --serif: "Songti SC", "Noto Serif SC", "Source Han Serif SC", "STSong", serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { margin: 0; min-height: 100%; }
+
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    button, input, textarea { font: inherit; color: inherit; }
+
+    button { cursor: pointer; }
+
+    :focus-visible {
+      outline: 2px solid var(--ink);
+      outline-offset: 3px;
+    }
+
+    [hidden] { display: none !important; }
+
+    h1, h2, p { margin: 0; }
+
+    .writing {
+      font-family: var(--serif);
+      font-weight: 500;
+    }
+
+    .gate, .app {
+      min-height: 100dvh;
+    }
+
+    .gate {
+      border-left: 2px solid var(--margin);
+    }
+
+    .gate-form, .index, .sheet {
+      min-height: 100dvh;
+      max-height: 100dvh;
+      overflow: auto;
+    }
+
+    .gate-form {
+      max-width: 36rem;
+      padding: 4.5rem 2.5rem 3rem 2.25rem;
+    }
+
+    .gate h1, .index h1 {
+      font-family: var(--serif);
+      font-size: 2.75rem;
+      font-weight: 600;
+      line-height: 1.15;
+    }
+
+    .lede {
+      margin-top: 0.85rem;
+      color: var(--muted);
+    }
+
+    form { margin-top: 2rem; }
+
+    .field { display: block; margin-top: 1.25rem; }
+
+    .field span {
+      display: block;
+      margin-bottom: 0.35rem;
+    }
+
+    input, textarea {
+      width: 100%;
+      background: transparent;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      padding: 0.55rem 0;
+    }
+
+    textarea {
+      border: 0;
+      resize: vertical;
+      min-height: 16rem;
+      line-height: 1.75;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem 1.25rem;
+      margin-top: 1.75rem;
+    }
+
+    .btn {
+      background: var(--ink);
+      color: var(--paper);
+      border: 0;
+      padding: 0.7rem 1.15rem;
+    }
+
+    .btn:disabled { opacity: 0.45; cursor: default; }
+
+    .link {
+      background: none;
+      border: 0;
+      padding: 0;
+      color: var(--muted);
+      text-decoration: underline;
+      text-underline-offset: 0.2em;
+    }
+
+    .link:disabled {
+      color: #8b9691;
+      text-decoration: none;
+      cursor: default;
+    }
+
+    .error {
+      min-height: 1.5rem;
+      margin: 1rem 0 0;
+      color: var(--danger);
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 20rem 1fr;
+    }
+
+    .index { display: flex; flex-direction: column; }
+
+    .index-head, .pager, .compose-wrap { padding-left: 1.25rem; padding-right: 1.25rem; }
+
+    .index-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      padding-top: 1.75rem;
+    }
+
+    #logout { margin-top: 0.85rem; }
+
+    .count { margin-top: 0.35rem; color: var(--muted); }
+
+    #who:empty { display: none; }
+
+    .compose-wrap { margin-top: 1.25rem; }
+
+    .compose-wrap .btn, .sheet-bar .btn { width: 100%; }
+
+    .notes { margin-top: 1.25rem; }
+
+    .note {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: 0;
+      border-top: 1px solid var(--line);
+      padding: 0.9rem 1.25rem 1rem;
+    }
+
+    .note.active { background: var(--wash); }
+
+    .note strong {
+      display: block;
+      font-family: var(--serif);
+      font-size: 1.125rem;
+      font-weight: 600;
+    }
+
+    .note em, .when {
+      display: block;
+      margin-top: 0.25rem;
+      color: var(--muted);
+      font-style: normal;
+      font-size: 0.875rem;
+    }
+
+    .note em {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .empty-list, .status-line {
+      margin: 1rem 1.25rem 0;
+      color: var(--muted);
+    }
+
+    .pager {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-top: auto;
+      padding-top: 1rem;
+      padding-bottom: 1.25rem;
+    }
+
+    .sheet {
+      border-left: 2px solid var(--margin);
+      padding: 2.5rem 2rem 4rem 2.25rem;
+    }
+
+    .prose { max-width: 34em; }
+
+    .back { margin-bottom: 1.5rem; }
+
+    #reader h2, #title {
+      font-family: var(--serif);
+      font-size: 2rem;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    #title { border-bottom: 1px solid var(--line); }
+
+    #body {
+      margin-top: 0.5rem;
+      font-family: var(--serif);
+      font-size: 1.125rem;
+    }
+
+    #content {
+      margin-top: 1.25rem;
+      white-space: pre-wrap;
+      font-family: var(--serif);
+      font-size: 1.125rem;
+      line-height: 1.75;
+    }
+
+    .sheet-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem 1.25rem;
+      margin-top: 1.5rem;
+    }
+
+    .sheet-bar .btn { width: auto; }
+
+    .count-line {
+      display: flex;
+      gap: 1rem;
+      color: var(--muted);
+      font-size: 0.875rem;
+    }
+
+    .count-line .over { color: var(--danger); }
+
+    .confirm {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem 1rem;
+      margin-top: 1.75rem;
+    }
+
+    #do-delete { color: var(--danger); }
+
+    .prompt {
+      max-width: 16em;
+      margin-top: 4rem;
+      color: var(--muted);
+      font-family: var(--serif);
+      font-size: 1.35rem;
+      line-height: 1.6;
+    }
+
+    .toast {
+      position: fixed;
+      left: 1rem;
+      right: 1rem;
+      bottom: 1rem;
+      max-width: 24rem;
+      margin: 0 auto;
+      background: var(--ink);
+      color: var(--paper);
+      padding: 0.75rem 1rem;
+    }
+
+    @media (max-width: 760px) {
+      .gate-form { max-height: none; padding: 2.5rem 1.25rem 3rem 1.25rem; }
+      .gate h1 { font-size: 2.4rem; }
+
+      .app { display: block; }
+      .index, .sheet { max-height: none; }
+      .sheet { border-left: 0; border-top: 2px solid var(--margin); }
+      .app[data-view="list"] .sheet { display: none; }
+      .app[data-view="read"] .index,
+      .app[data-view="write"] .index { display: none; }
+      .prompt { display: none; }
+    }
+
+    @media (min-width: 761px) {
+      .back { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { scroll-behavior: auto; }
+    }
   </style>
 </head>
 <body>
-  <h1>笔记</h1>
-  <p>页面和接口同源。先注册再登录，token 会带到后面的请求里。</p>
+  <div id="gate" class="gate">
+    <div class="gate-form">
+      <h1>笔记</h1>
+      <p class="lede">写下要记住的事。<br />登录之后，只有你能看见。</p>
+      <form id="account-form">
+        <label class="field">
+          <span>用户名</span>
+          <input id="username" name="username" autocomplete="username" required />
+        </label>
+        <label class="field">
+          <span>密码</span>
+          <input id="password" name="password" type="password" autocomplete="current-password" required />
+        </label>
+        <p id="form-error" class="error" role="alert"></p>
+        <div class="actions">
+          <button class="btn" id="submit-account" type="submit">登录</button>
+          <button class="link" id="switch-mode" type="button">没有账号？去注册</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-  <section>
-    <h2>账号</h2>
-    <label>用户名 <input id="username" /></label>
-    <label>密码 <input id="password" type="password" /></label>
-    <button id="register">注册</button>
-    <button id="login">登录</button>
-  </section>
+  <div id="app" class="app" hidden data-view="list">
+    <aside class="index">
+      <div class="index-head">
+        <div>
+          <h1>笔记</h1>
+          <p id="who" class="count"></p>
+          <p id="count" class="count"></p>
+        </div>
+        <button class="link" id="logout" type="button">退出</button>
+      </div>
+      <div class="compose-wrap">
+        <button class="btn" id="compose" type="button">写一篇</button>
+      </div>
+      <div id="notes" class="notes"></div>
+      <p id="list-status" class="status-line" hidden></p>
+      <nav id="pager" class="pager" hidden>
+        <button class="link" id="prev" type="button">上一页</button>
+        <span id="page-label"></span>
+        <button class="link" id="next" type="button">下一页</button>
+      </nav>
+    </aside>
+    <main class="sheet">
+      <section id="prompt">
+        <p class="prompt">从左边选一篇，或写一篇新的。</p>
+      </section>
+      <article id="reader" class="prose" hidden>
+        <button class="link back" id="back-read" type="button">返回列表</button>
+        <h2 class="writing" id="read-title"></h2>
+        <p class="when" id="read-when"></p>
+        <div id="content" class="writing"></div>
+        <div class="confirm">
+          <button class="link" id="ask-delete" type="button">删除这篇</button>
+          <div id="confirm-delete" hidden>
+            删除后无法恢复。
+            <button class="link" id="cancel-delete" type="button">留下</button>
+            <button class="link" id="do-delete" type="button">删除</button>
+          </div>
+        </div>
+      </article>
+      <form id="writer" class="prose" hidden>
+        <button class="link back" id="back-write" type="button">返回列表</button>
+        <label class="field">
+          <span>标题</span>
+          <input class="writing" id="title" maxlength="100" required />
+        </label>
+        <label class="field">
+          <span>正文</span>
+          <textarea class="writing" id="body" maxlength="2000"></textarea>
+        </label>
+        <p id="write-error" class="error" role="alert"></p>
+        <div class="sheet-bar">
+          <button class="btn" id="save" type="submit">保存</button>
+          <button class="link" id="cancel-write" type="button">取消</button>
+          <p class="count-line">
+            <span id="title-count">标题 0/100</span>
+            <span id="body-count">正文 0/2000</span>
+          </p>
+        </div>
+      </form>
+    </main>
+  </div>
 
-  <section>
-    <h2>新建</h2>
-    <label>标题 <input id="title" /></label>
-    <label>内容 <textarea id="content" rows="3"></textarea></label>
-    <button id="create">创建</button>
-  </section>
+  <p id="toast" class="toast" role="status" hidden></p>
 
-  <section>
-    <h2>列表</h2>
-    <label>页码 <input id="page" value="1" /></label>
-    <button id="reload">刷新</button>
-    <div id="list"></div>
-  </section>
-
-  <pre id="out"></pre>
   <script>
     const base = location.protocol === "file:" ? "http://127.0.0.1:3000" : ""
-    const out = document.querySelector("#out")
-    let token = localStorage.getItem("token") || ""
+    const pageSize = 10
+    const knownErrors = {
+      "invalid json": "请把内容填完整",
+      "username required and password at least 6 chars": "用户名不能空，密码至少 6 位",
+      "username already exists": "这个用户名已经注册过了",
+      "register failed": "注册没有成功，过一会儿再试",
+      "username or password incorrect": "用户名或密码不对",
+      "login failed": "登录没有成功，过一会儿再试",
+      "invalid title or content": "标题不能空。标题最多 100 字，正文最多 2000 字",
+      "create failed": "这篇没有保存下来，过一会儿再试",
+      "note not found": "这篇笔记不存在，或已经删掉了",
+      "get failed": "这篇暂时打不开",
+      "list failed": "列表没有加载出来",
+      "delete failed": "没有删掉，过一会儿再试",
+      "missing token": "请先登录",
+      "invalid token": "登录已失效，请重新登录",
+      "invalid id": "笔记编号不对"
+    }
 
-    function show(data) {
-      out.textContent = typeof data === "string" ? data : JSON.stringify(data, null, 2)
+    const $ = (id) => document.getElementById(id)
+    let token = localStorage.getItem("token") || ""
+    let username = localStorage.getItem("username") || ""
+    let mode = "login"
+    let page = 1
+    let total = 0
+    let current = null
+    let toastTimer = 0
+
+    function runeCount(value) {
+      return Array.from(value).length
+    }
+
+    function formatWhen(iso) {
+      const date = new Date(iso)
+      if (Number.isNaN(date.getTime())) return ""
+      const pad = (n) => String(n).padStart(2, "0")
+      return date.getFullYear() + "年" + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + pad(date.getHours()) + ":" + pad(date.getMinutes())
+    }
+
+    function preview(text) {
+      return (text || "").split("\n").map((line) => line.trim()).find(Boolean) || ""
+    }
+
+    function human(message, status) {
+      if (knownErrors[message]) return knownErrors[message]
+      if (status === 401) return "请重新登录"
+      return "没有完成，过一会儿再试"
+    }
+
+    function say(text) {
+      const toast = $("toast")
+      toast.textContent = text
+      toast.hidden = !text
+      clearTimeout(toastTimer)
+      if (text) toastTimer = setTimeout(() => { toast.hidden = true }, 2400)
+    }
+
+    function saveSession(nextToken, nextUser) {
+      token = nextToken
+      username = nextUser
+      localStorage.setItem("token", token)
+      localStorage.setItem("username", username)
+    }
+
+    function clearSession() {
+      token = ""
+      username = ""
+      current = null
+      localStorage.removeItem("token")
+      localStorage.removeItem("username")
     }
 
     async function api(path, options = {}) {
-      const headers = { "Content-Type": "application/json", ...(options.headers || {}) }
+      const headers = { ...(options.headers || {}) }
+      if (options.body) headers["Content-Type"] = "application/json"
       if (token) headers.Authorization = "Bearer " + token
-      const res = await fetch(base + path, { ...options, headers })
-      const body = await res.json().catch(() => ({}))
-      if (!res.ok) throw body
+      let response
+      try {
+        response = await fetch(base + path, { ...options, headers })
+      } catch {
+        throw new Error("网络不通。确认服务已在本机打开")
+      }
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        if (response.status === 401 && path !== "/login") {
+          clearSession()
+          showGate(human(body.message, 401))
+        }
+        throw new Error(human(body.message, response.status))
+      }
       return body
     }
 
-    document.querySelector("#register").onclick = async () => {
-      try {
-        show(await api("/register", { method: "POST", body: accountBody() }))
-      } catch (err) { show(err) }
+    function showGate(message) {
+      $("gate").hidden = false
+      $("app").hidden = true
+      $("form-error").textContent = message || ""
+      document.title = "笔记"
     }
-    document.querySelector("#login").onclick = async () => {
-      try {
-        const body = await api("/login", { method: "POST", body: accountBody() })
-        token = body.data.token
-        localStorage.setItem("token", token)
-        show(body)
-        loadList()
-      } catch (err) { show(err) }
-    }
-    document.querySelector("#create").onclick = async () => {
-      try {
-        show(await api("/notes", {
-          method: "POST",
-          body: JSON.stringify({
-            title: document.querySelector("#title").value,
-            content: document.querySelector("#content").value
-          })
-        }))
-        loadList()
-      } catch (err) { show(err) }
-    }
-    document.querySelector("#reload").onclick = loadList
 
-    function accountBody() {
-      return JSON.stringify({
-        username: document.querySelector("#username").value,
-        password: document.querySelector("#password").value
+    function showApp() {
+      $("gate").hidden = true
+      $("app").hidden = false
+      $("who").textContent = username
+    }
+
+    function setView(view) {
+      $("app").dataset.view = view
+      $("prompt").hidden = view !== "list"
+      $("reader").hidden = view !== "read"
+      $("writer").hidden = view !== "write"
+      if (view !== "read") document.title = "笔记"
+    }
+
+    function setMode(next) {
+      mode = next
+      const register = mode === "register"
+      $("submit-account").textContent = register ? "注册" : "登录"
+      $("switch-mode").textContent = register ? "已有账号？去登录" : "没有账号？去注册"
+      $("password").autocomplete = register ? "new-password" : "current-password"
+      $("form-error").textContent = ""
+    }
+
+    function renderCounts() {
+      const titleCount = runeCount($("title").value)
+      const bodyCount = runeCount($("body").value)
+      $("title-count").textContent = "标题 " + titleCount + "/100"
+      $("body-count").textContent = "正文 " + bodyCount + "/2000"
+      $("title-count").classList.toggle("over", titleCount > 100)
+      $("body-count").classList.toggle("over", bodyCount > 2000)
+    }
+
+    function openWriter() {
+      current = null
+      $("title").value = ""
+      $("body").value = ""
+      $("write-error").textContent = ""
+      renderCounts()
+      setView("write")
+      highlight("")
+      $("title").focus()
+    }
+
+    function highlight(id) {
+      document.querySelectorAll(".note").forEach((button) => {
+        const on = button.dataset.id === String(id)
+        button.classList.toggle("active", on)
+        if (on) button.setAttribute("aria-current", "true")
+        else button.removeAttribute("aria-current")
       })
     }
 
-    async function loadList() {
-      const page = document.querySelector("#page").value || "1"
+    function showNote(note) {
+      current = note
+      $("read-title").textContent = note.title
+      $("read-when").textContent = formatWhen(note.created_at)
+      $("content").textContent = note.content || ""
+      $("confirm-delete").hidden = true
+      $("ask-delete").hidden = false
+      document.title = note.title + " · 笔记"
+      setView("read")
+      highlight(note.id)
+    }
+
+    async function openNote(id) {
+      $("list-status").hidden = true
       try {
-        const body = await api("/notes?page=" + page + "&size=10")
-        const box = document.querySelector("#list")
-        box.innerHTML = ""
-        for (const note of body.data.list) {
-          const row = document.createElement("p")
-          row.textContent = "#" + note.id + " " + note.title
-          const view = document.createElement("button")
-          view.textContent = "查看"
-          view.onclick = async () => {
-            try { show(await api("/notes/" + note.id)) } catch (err) { show(err) }
-          }
-          const del = document.createElement("button")
-          del.textContent = "删除"
-          del.onclick = async () => {
-            try { show(await api("/notes/" + note.id, { method: "DELETE" })); loadList() } catch (err) { show(err) }
-          }
-          row.append(view, del)
-          box.append(row)
+        const body = await api("/notes/" + id)
+        showNote(body.data)
+      } catch (err) {
+        if (!token) return
+        say(err.message)
+      }
+    }
+
+    function renderList(notes) {
+      const box = $("notes")
+      box.replaceChildren()
+      $("count").textContent = total ? "共 " + total + " 篇" : ""
+      if (!notes.length) {
+        const empty = document.createElement("p")
+        empty.className = "empty-list"
+        empty.textContent = page > 1 ? "这一页已经空了。" : "还没有笔记。写下一篇，它会出现在这里。"
+        box.append(empty)
+      }
+      for (const note of notes) {
+        const button = document.createElement("button")
+        button.type = "button"
+        button.className = "note"
+        button.dataset.id = String(note.id)
+        const title = document.createElement("strong")
+        title.textContent = note.title
+        const when = document.createElement("em")
+        when.textContent = formatWhen(note.created_at)
+        button.append(title, when)
+        const line = preview(note.content)
+        if (line) {
+          const brief = document.createElement("em")
+          brief.textContent = line
+          button.append(brief)
         }
-        show(body)
-      } catch (err) { show(err) }
+        button.addEventListener("click", () => openNote(note.id))
+        box.append(button)
+      }
+      const pages = Math.max(1, Math.ceil(total / pageSize))
+      $("pager").hidden = total <= pageSize
+      $("page-label").textContent = "第 " + page + " 页，共 " + pages + " 页"
+      $("prev").disabled = page <= 1
+      $("next").disabled = page >= pages
+      highlight(current && current.id)
+    }
+
+    async function loadList() {
+      $("list-status").hidden = false
+      $("list-status").textContent = "正在读取…"
+      try {
+        const body = await api("/notes?page=" + page + "&size=" + pageSize)
+        total = body.data.total || 0
+        $("list-status").hidden = true
+        renderList(body.data.list || [])
+      } catch (err) {
+        if (!token) return
+        $("notes").replaceChildren()
+        $("list-status").hidden = false
+        $("list-status").textContent = err.message
+      }
+    }
+
+    $("switch-mode").addEventListener("click", () => setMode(mode === "login" ? "register" : "login"))
+
+    $("account-form").addEventListener("submit", async (event) => {
+      event.preventDefault()
+      const name = $("username").value.trim()
+      const password = $("password").value
+      $("form-error").textContent = ""
+      if (!name || !password) {
+        $("form-error").textContent = "请填写用户名和密码"
+        return
+      }
+      if (mode === "register" && runeCount(password) < 6) {
+        $("form-error").textContent = "密码至少 6 位"
+        return
+      }
+      const submit = $("submit-account")
+      submit.disabled = true
+      try {
+        const payload = JSON.stringify({ username: name, password })
+        if (mode === "register") await api("/register", { method: "POST", body: payload })
+        const body = await api("/login", { method: "POST", body: payload })
+        saveSession(body.data.token, name)
+        page = 1
+        current = null
+        showApp()
+        setView("list")
+        await loadList()
+      } catch (err) {
+        if (mode === "register" && err.message === "这个用户名已经注册过了") setMode("login")
+        $("form-error").textContent = err.message
+      } finally {
+        submit.disabled = false
+      }
+    })
+
+    $("logout").addEventListener("click", () => {
+      clearSession()
+      showGate()
+    })
+
+    $("compose").addEventListener("click", openWriter)
+    $("back-write").addEventListener("click", () => setView("list"))
+    $("cancel-write").addEventListener("click", () => setView("list"))
+    $("back-read").addEventListener("click", () => setView("list"))
+
+    $("title").addEventListener("input", renderCounts)
+    $("body").addEventListener("input", renderCounts)
+
+    $("writer").addEventListener("submit", async (event) => {
+      event.preventDefault()
+      const title = $("title").value.trim()
+      const content = $("body").value
+      $("write-error").textContent = ""
+      if (!title || runeCount(title) > 100 || runeCount(content) > 2000) {
+        $("write-error").textContent = "标题不能空。标题最多 100 字，正文最多 2000 字"
+        return
+      }
+      $("save").disabled = true
+      try {
+        const body = await api("/notes", {
+          method: "POST",
+          body: JSON.stringify({ title, content })
+        })
+        page = 1
+        say("已保存")
+        await loadList()
+        showNote(body.data)
+      } catch (err) {
+        if (!token) return
+        $("write-error").textContent = err.message
+      } finally {
+        $("save").disabled = false
+      }
+    })
+
+    $("ask-delete").addEventListener("click", () => {
+      $("ask-delete").hidden = true
+      $("confirm-delete").hidden = false
+    })
+
+    $("cancel-delete").addEventListener("click", () => {
+      $("confirm-delete").hidden = true
+      $("ask-delete").hidden = false
+    })
+
+    $("do-delete").addEventListener("click", async () => {
+      if (!current) return
+      $("do-delete").disabled = true
+      try {
+        await api("/notes/" + current.id, { method: "DELETE" })
+        current = null
+        say("已删除")
+        if ((page - 1) * pageSize >= total - 1 && page > 1) page -= 1
+        setView("list")
+        await loadList()
+      } catch (err) {
+        if (!token) return
+        say(err.message)
+      } finally {
+        $("do-delete").disabled = false
+      }
+    })
+
+    $("prev").addEventListener("click", async () => {
+      if (page <= 1) return
+      page -= 1
+      await loadList()
+    })
+
+    $("next").addEventListener("click", async () => {
+      const pages = Math.ceil(total / pageSize)
+      if (page >= pages) return
+      page += 1
+      await loadList()
+    })
+
+    if (token) {
+      showApp()
+      setView("list")
+      loadList()
+    } else {
+      showGate()
     }
   </script>
 </body>

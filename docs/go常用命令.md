@@ -19,7 +19,8 @@ go test ./lessons/...
 go run lessons/01-hello/demo.go
 go fmt ./...
 
-# 实战。先复制 .env.example 为 .env 并填好数据库
+# 实战步骤在 projects/notes-mine/README.md
+# 下面跑的是做完的对照。先复制 .env.example 为 .env 并填好数据库
 go run ./projects/notes-api/cmd/api
 go run ./projects/notes-api/cmd/worker
 air

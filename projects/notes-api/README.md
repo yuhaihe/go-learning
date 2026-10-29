@@ -2,7 +2,7 @@
 
 把前面的课收成一个小服务：注册登录、笔记增删查、Redis 缓存、创建后丢进队列。
 
-当前目录是做完的对照。要自己写一遍，按 [实现步骤.md](实现步骤.md) 在 `projects/notes-mine` 里从第 0 步做，不要先看这里的函数体。
+当前目录是做完的对照。要自己写一遍，按 [`projects/notes-mine/README.md`](../notes-mine/README.md) 从第 0 步做，不要先看这里的函数体。
 
 ## 和公司项目的对照
 
@@ -49,4 +49,4 @@ go run ./projects/notes-api/cmd/worker
 
 ## 组装顺序
 
-`cmd/api/main.go` 按 [`docs/从零建项目.md`](../../docs/从零建项目.md) 来：配置、日志、MySQL、Redis、路由、监听、收到信号后先停请求再关连接。
+`cmd/api/main.go` 的顺序是：配置、日志、MySQL、Redis、路由、监听。收到退出信号后先停掉新请求，再关队列、Redis 和数据库。
